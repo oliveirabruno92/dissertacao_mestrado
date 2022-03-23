@@ -4,32 +4,38 @@ import argparse
 
 class RegressionData:
     
-    def __init__(self, args):
-        self.n_samples = args.get('n_samples') 
-        self.n_features = args.get('n_features')
-        self.nonzero_features = args.get('nonzero_features')
-        self.seed = args.get('seed') 
-        self.rng = np.random.default_rng(self.seed)
-        
-    def _generate_coeficients(self, mean: float = 5., std: float = 1.) -> np.array:
+    def __init__(self, args) -> None:
+        self.n_samples = args['n_samples'] 
+        self.n_features = args['n_features']
+        self.nonzero_features = args['nonzero_features']
+        self.seed = args['seed']
+        self.rng = self._random_generator()
+                
+    def _generate_coeficients(self, mean: float = 10., std: float = 2.5) -> np.array:
         coefs = np.zeros(self.n_features)
         coefs[:self.nonzero_features] = (
             self.rng.choice(a=[-1,1], size=self.nonzero_features) * 
             self.rng.normal(mean, std, size=self.nonzero_features)
         )
         return coefs
-
+    
+    def _random_generator(self):
+        return np.random.default_rng(self.seed)
+    
     def _noise(self):
         return self.rng.normal(0, 1, size=self.n_samples)
     
     def _intercept(self):
-        return self.rng.uniform(-3,3)
+        return self.rng.uniform(-1,1)
     
-    def _generate_features(self):
-        return self.rng.normal(size=(self.n_samples, self.n_features))
+    def _generate_features(self, loc: float = 0., scale: float = 1.):
+        return self.rng.normal(
+            loc=loc, 
+            scale=scale, 
+            size=(self.n_samples, self.n_features)
+        )
     
     def _generate_target(self, features, coefs):
-        coefs = self._generate_coeficients()
         noise = self._noise()
         intercept = self._intercept()
         return intercept + features.dot(coefs) + noise  
@@ -41,7 +47,6 @@ class RegressionData:
         return X, y, coefs
     
     def plot(self, X, y, coefs):
-        
         fig, axes = plt.subplots(
             nrows=2, 
             ncols=self.nonzero_features,
@@ -93,5 +98,3 @@ if __name__=='__main__':
     
     args = parser.parse_args().__dict__
     main(args)
-
-    
